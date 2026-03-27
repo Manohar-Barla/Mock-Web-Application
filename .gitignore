@@ -1,8 +1,12 @@
-# Python
+# Byte-compiled / optimized / DLL files
 __pycache__/
-*.py[cod]
+*.py[codz]
 *$py.class
+
+# C extensions
 *.so
+
+# Distribution / packaging
 .Python
 build/
 develop-eggs/
@@ -22,25 +26,45 @@ share/python-wheels/
 *.egg
 MANIFEST
 
-# Virtual Environments
-venv/
-env/
-ENV/
-env.bak/
-venv.bak/
-.venv/
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py.cover
+.hypothesis/
+.pytest_cache/
+cover/
 
 # Flask & SQL
 instance/
-.pytest_cache/
-.coverage
-htmlcov/
+.webassets-cache
 *.db
 *.sqlite3
+instance/site.db
 
-# Environment variables
+# Environments
 .env
-.flaskenv
+.envrc
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
 
 # IDE / Editor
 .vscode/
@@ -52,6 +76,11 @@ htmlcov/
 .DS_Store
 Thumbs.db
 
-# User Uploads (keeping local testing files out of Git)
+# User Uploads
 static/uploads/*
 !static/uploads/.gitkeep
+
+# Other
+.cursorignore
+.cursorindexingignore
+ marimo/
