@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block title %}Home - MockMaster{% endblock %}
+
+{% block content %}
+<div class="text-center" style="margin-top: 0rem;">
+    <h1
+        style="font-size: 3.5rem; margin-bottom: 0rem; color: var(--text-main); font-weight: 800; letter-spacing: -1px;">
+        Welcome to <span style="color: var(--primary);">MockMaster</span>
+    </h1>
+    <p class="text-muted" style="font-size: 1.25rem; max-width: 800px; margin: 0 auto 1rem auto;">
+        The ultimate platform for practicing multiple choice, multi-select, and numerical questions. Enhance your skills
+        and track your progress.
+    </p>
+
+    <div style="display: flex; justify-content: center; gap: 2rem; flex-wrap: wrap;">
+        <!-- Exam Module -->
+        <div class="card" style="width: 320px; text-align: left; padding: 2.5rem;">
+            <div style="font-size: 2.5rem; color: var(--primary); margin-bottom: 0rem;">
+                <i class="fa-solid fa-stopwatch"></i>
+            </div>
+            <h3>Exam Module</h3>
+            <p class="text-muted" style="margin-bottom: 2rem;">Take a timed mock exam with 1 minute per question and
+                track your progress.</p>
+            <a href="{{ url_for('practice_exam') }}" class="btn btn-primary" style="width: 100%;">Start Exam</a>
+        </div>
+
+        <!-- Line Practice -->
+        <div class="card" style="width: 320px; text-align: left; padding: 2.5rem;">
+            <div style="font-size: 2.5rem; color: var(--secondary); margin-bottom: 0rem;">
+                <i class="fa-solid fa-graduation-cap"></i>
+            </div>
+            <h3>Line Practice</h3>
+            <p class="text-muted" style="margin-bottom: 2rem;">Practice questions without time limits to enhance your
+                conceptual understanding.</p>
+            <a href="{{ url_for('practice') }}" class="btn btn-secondary"
+                style="width: 100%; border-color: var(--secondary); background: var(--secondary); color: white;">Start
+                Practice</a>
+        </div>
+
+        <!-- Upload Content -->
+        <div class="card" style="width: 320px; text-align: left; padding: 2.5rem;">
+            <div style="font-size: 2.5rem; color: var(--success); margin-bottom: 0rem;">
+                <i class="fa-solid fa-server"></i>
+            </div>
+            <h3>Upload Content</h3>
+            <p class="text-muted" style="margin-bottom: 2rem;">Create new modules and add questions with options or
+                images via the backend.</p>
+            <a href="{{ url_for('upload') }}" class="btn btn-secondary" style="width: 100%;">Backend Interface</a>
+        </div>
+    </div>
+</div>
+
+<footer style="margin-top: auto; padding-top: 0rem; text-align: center;">
+    <div style="border-top: 1px solid var(--border); padding-top: 2rem; padding-bottom: 0rem;">
+        <p class="text-muted" style="margin-bottom: 0.75rem; font-size: 0.95rem;">
+            &copy; 2026 MockMaster. All rights reserved.
+        </p>
+        <div style="display: flex; justify-content: center; gap: 1.5rem; font-size: 0.9rem;">
+            <a href="#" style="color: var(--primary); text-decoration: none; font-weight: 500; transition: color 0.2s;"
+                onmouseover="this.style.color='var(--primary-hover)'"
+                onmouseout="this.style.color='var(--primary)'">Privacy Policy</a>
+            <a href="#" style="color: var(--primary); text-decoration: none; font-weight: 500; transition: color 0.2s;"
+                onmouseover="this.style.color='var(--primary-hover)'"
+                onmouseout="this.style.color='var(--primary)'">Terms of Service</a>
+            <a href="#" style="color: var(--primary); text-decoration: none; font-weight: 500; transition: color 0.2s;"
+                onmouseover="this.style.color='var(--primary-hover)'"
+                onmouseout="this.style.color='var(--primary)'">Contact Support</a>
+            <a href="https://github.com/" target="_blank"
+                style="color: var(--primary); text-decoration: none; font-weight: 500; transition: color 0.2s;"
+                onmouseover="this.style.color='var(--primary-hover)'" onmouseout="this.style.color='var(--primary)'"
+                title="View Source on GitHub"><i class="fa-brands fa-github"
+                    style="margin-right: 4px; font-size: 1.1em;"></i>GitHub</a>
+        </div>
+    </div>
+</footer>
+{% endblock %}

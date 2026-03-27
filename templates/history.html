@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% block title %}Attempt History - MockMaster{% endblock %}
+
+{% block content %}
+<div style="max-width: 1000px; margin: 0 auto;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h2 style="margin: 0; color: var(--primary);">Exam & Practice History</h2>
+        <div style="display: flex; gap: 1rem;">
+            {% if attempts %}
+            <form action="{{ url_for('clear_history') }}" method="POST" onsubmit="return confirm('Clear ALL history? This cannot be undone.');">
+                <button type="submit" class="btn btn-secondary" style="color: var(--danger); border-color: var(--danger);">Clear All History</button>
+            </form>
+            {% endif %}
+            <a href="{{ url_for('home') }}" class="btn btn-secondary">Back to Home</a>
+        </div>
+    </div>
+
+    <div class="card" style="padding: 0; overflow: hidden;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left;">
+            <thead style="background: rgba(79, 70, 229, 0.05); border-bottom: 2px solid var(--border);">
+                <tr>
+                    <th style="padding: 1.25rem 1.5rem;">Student Name</th>
+                    <th style="padding: 1.25rem 1.5rem;">Module</th>
+                    <th style="padding: 1.25rem 1.5rem;">Mode</th>
+                    <th style="padding: 1.25rem 1.5rem;">Score</th>
+                    <th style="padding: 1.25rem 1.5rem;">Percentage</th>
+                    <th style="padding: 1.25rem 1.5rem;">Date</th>
+                    <th style="padding: 1.25rem 1.5rem;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if attempts %}
+                    {% for attempt in attempts %}
+                    <tr class="history-row">
+                        <td style="padding: 1rem 1.5rem; font-weight: 600;">{{ attempt.student_name }}</td>
+                        <td style="padding: 1rem 1.5rem;">{{ attempt.module_obj.name }}</td>
+                        <td style="padding: 1rem 1.5rem;">
+                            <span class="mode-badge {{ 'mode-exam' if attempt.mode == 'exam' else 'mode-practice' }}">
+                                {{ attempt.mode }}
+                            </span>
+                        </td>
+                        <td style="padding: 1rem 1.5rem;">{{ attempt.score }} / {{ attempt.total }}</td>
+                        <td class="percentage-cell {{ 'score-high' if attempt.percentage >= 80 else 'score-mid' if attempt.percentage >= 50 else 'score-low' }}">
+                            {{ attempt.percentage }}%
+                        </td>
+                        <td style="padding: 1rem 1.5rem; color: #666; font-size: 0.9rem;">
+                            {{ attempt.timestamp.strftime('%Y-%m-%d %H:%M') }}
+                        </td>
+                        <td style="padding: 1rem 1.5rem;">
+                            <form action="{{ url_for('delete_attempt', attempt_id=attempt.id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Delete this record?');">
+                                <button type="submit" style="background:none; border:none; color: var(--danger); cursor:pointer; font-size: 1.1rem;" title="Delete Record">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="6" style="padding: 4rem; text-align: center; color: #999;">
+                            <i class="fa-solid fa-folder-open" style="font-size: 3rem; display: block; margin-bottom: 1rem;"></i>
+                            No attempts recorded yet.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+    .history-row {
+        border-bottom: 1px solid var(--border);
+        transition: background 0.2s;
+    }
+
+    .history-row:hover {
+        background: rgba(0, 0, 0, 0.02);
+    }
+
+    .mode-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .mode-exam {
+        background: #E0E7FF;
+        color: #4338CA;
+    }
+
+    .mode-practice {
+        background: #F3F4F6;
+        color: #4B5563;
+    }
+
+    .percentage-cell {
+        padding: 1rem 1.5rem;
+        font-weight: 700;
+    }
+
+    .score-high { color: var(--success); }
+    .score-mid { color: var(--primary); }
+    .score-low { color: var(--danger); }
+</style>
+{% endblock %}

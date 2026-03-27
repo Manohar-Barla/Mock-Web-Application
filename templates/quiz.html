@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% block title %}Quiz: {{ module.name }} - MockMaster{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 0 auto;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; background: var(--surface); padding: 1.5rem 2rem; border-radius: var(--radius); box-shadow: var(--shadow-sm);">
+        <div>
+            <h2 style="margin: 0; color: var(--primary);">{{ module.name }}</h2>
+            <p class="text-muted" style="margin: 0; font-size: 0.9rem;">Answer all questions to the best of your ability.</p>
+        </div>
+        <a href="{{ url_for('practice') }}" class="btn btn-secondary"><i class="fa-solid fa-arrow-left" style="margin-right: 8px;"></i> Exit Quiz</a>
+    </div>
+
+    <form id="quiz-form" action="{{ url_for('submit_quiz', module_id=module.id) }}" method="POST">
+        <input type="hidden" name="mode" value="practice">
+        <div class="card" style="margin-bottom: 2rem; padding: 1.5rem 2.5rem; border-left: 4px solid var(--secondary);">
+            <div class="form-group" style="margin-bottom: 0;">
+                <label for="student_name" class="form-label">Full Name:</label>
+                <input type="text" name="student_name" id="student_name" class="form-control" placeholder="Enter your full name to track your score" required>
+            </div>
+        </div>
+        {% for q in questions %}
+            <div class="card" style="margin-bottom: 2rem; padding: 2.5rem; position: relative; overflow: hidden;">
+                <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--primary);"></div>
+                
+                <h4 style="margin-bottom: 1.5rem; font-size: 1.25rem;">
+                    <span style="color: var(--primary); margin-right: 8px;">Question {{ loop.index }}</span> <br>
+                    <span style="font-weight: 500;">{{ q.text }}</span>
+                </h4>
+                
+                {% if q.image_path %}
+                    <img src="{{ url_for('static', filename='uploads/' + q.image_path) }}" style="max-width: 100%; max-height: 350px; margin-bottom: 2rem; border-radius: 8px; border: 1px solid var(--border); box-shadow: var(--shadow-sm);">
+                {% endif %}
+
+                <div style="margin-top: 1rem; border-top: 1px solid var(--border); padding-top: 1.5rem;">
+                    {% if q.type == 'single' %}
+                        {% for opt in q.shuffled_options %}
+                            <label style="display: flex; align-items: center; margin-bottom: 1rem; cursor: pointer; padding: 0.75rem 1rem; border: 1px solid var(--border); border-radius: 8px; transition: all 0.2s;">
+                                <input type="radio" name="q_{{ q.id }}" value="{{ opt.id }}" required style="margin-right: 12px; transform: scale(1.2);"> 
+                                <span>{{ opt.text }}</span>
+                            </label>
+                        {% endfor %}
+                    {% elif q.type == 'multiple' %}
+                        {% for opt in q.shuffled_options %}
+                            <label style="display: flex; align-items: center; margin-bottom: 1rem; cursor: pointer; padding: 0.75rem 1rem; border: 1px solid var(--border); border-radius: 8px; transition: all 0.2s;">
+                                <input type="checkbox" name="q_{{ q.id }}[]" value="{{ opt.id }}" style="margin-right: 12px; transform: scale(1.2);"> 
+                                <span>{{ opt.text }}</span>
+                            </label>
+                        {% endfor %}
+                    {% elif q.type == 'numerical' %}
+                        <input type="number" name="q_{{ q.id }}" step="any" class="form-control" placeholder="Enter your numerical answer here..." required style="max-width: 300px; padding: 1rem;">
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+
+        <div style="text-align: center; margin-top: 3rem; margin-bottom: 5rem;">
+            <button type="submit" class="btn btn-primary" style="font-size: 1.25rem; padding: 1rem 3rem; border-radius: 50px; box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.3);">
+                <i class="fa-solid fa-paper-plane" style="margin-right: 8px;"></i> Submit Answers
+            </button>
+        </div>
+    </form>
+</div>
+
+<style>
+    label:has(input:checked) {
+        border-color: var(--primary) !important;
+        background-color: rgba(79, 70, 229, 0.05);
+    }
+</style>
+{% endblock %}

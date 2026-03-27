@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+{% block title %}Edit Module - MockMaster{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 0 auto;">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem;">
+        <div>
+            <h2>Manage Questions: {{ module.name }}</h2>
+            <p class="text-muted" style="margin: 0;">Add and edit questions for this module.</p>
+        </div>
+        <a href="{{ url_for('upload') }}" class="btn btn-secondary">Back to Modules</a>
+    </div>
+
+    <!-- Add Question Form -->
+    <div class="card" style="margin-bottom: 3rem;">
+        <h3 style="margin-bottom: 1.5rem;">Add New Question</h3>
+        <form action="{{ url_for('add_question', module_id=module.id) }}" method="POST" enctype="multipart/form-data">
+            <div class="form-group">
+                <label class="form-label" for="text">Question Text</label>
+                <textarea id="text" name="text" class="form-control" rows="3" required></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="type">Question Type</label>
+                <select id="type" name="type" class="form-control" onchange="toggleOptions(this.value)" required>
+                    <option value="single">Single Choice (Radio)</option>
+                    <option value="multiple">Multiple Choice (Checkbox)</option>
+                    <option value="numerical">Numerical Answer</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="image">Optional Image (<small>Max 16MB</small>)</label>
+                <input type="file" id="image" name="image" class="form-control" accept="image/*">
+            </div>
+
+            <div id="options-container" class="form-group">
+                <label class="form-label">Options (Check the box next to the correct answer)</label>
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;" id="options-list">
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <input type="checkbox" name="is_correct_1" value="1" id="is_correct_1" title="Mark as Correct Answer">
+                        <label for="is_correct_1" style="margin: 0; min-width: 65px; color: var(--success); font-weight: bold; cursor: pointer;">Correct?</label>
+                        <input type="text" name="option_1" class="form-control" placeholder="Option 1 text">
+                    </div>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <input type="checkbox" name="is_correct_2" value="1" id="is_correct_2" title="Mark as Correct Answer">
+                        <label for="is_correct_2" style="margin: 0; min-width: 65px; color: var(--success); font-weight: bold; cursor: pointer;">Correct?</label>
+                        <input type="text" name="option_2" class="form-control" placeholder="Option 2 text">
+                    </div>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <input type="checkbox" name="is_correct_3" value="1" id="is_correct_3" title="Mark as Correct Answer">
+                        <label for="is_correct_3" style="margin: 0; min-width: 65px; color: var(--success); font-weight: bold; cursor: pointer;">Correct?</label>
+                        <input type="text" name="option_3" class="form-control" placeholder="Option 3 text">
+                    </div>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <input type="checkbox" name="is_correct_4" value="1" id="is_correct_4" title="Mark as Correct Answer">
+                        <label for="is_correct_4" style="margin: 0; min-width: 65px; color: var(--success); font-weight: bold; cursor: pointer;">Correct?</label>
+                        <input type="text" name="option_4" class="form-control" placeholder="Option 4 text">
+                    </div>
+                </div>
+            </div>
+
+            <div id="numerical-container" class="form-group" style="display: none;">
+                <label class="form-label" for="numerical_answer">Correct Numerical Answer</label>
+                <input type="number" id="numerical_answer" name="numerical_answer" class="form-control" step="any">
+            </div>
+
+            <button type="submit" class="btn btn-primary">Add Question</button>
+        </form>
+    </div>
+
+    <!-- Smart Paste Form -->
+    <div class="card" style="margin-bottom: 3rem;">
+        <h3 style="margin-bottom: 0.5rem;">Smart Import (Copy & Paste)</h3>
+        <p class="text-muted" style="margin-bottom: 1.5rem;">Paste questions in bulk. Use the format below.</p>
+        
+        <form action="{{ url_for('smart_paste', module_id=module.id) }}" method="POST">
+            <div class="form-group">
+                <label class="form-label" for="pasted_text">Paste Text Here:</label>
+                <textarea id="pasted_text" name="pasted_text" class="form-control" rows="8" placeholder="Question Text&#10;A. Option 1&#10;B. Option 2&#10;C. Option 3&#10;D. Option 4&#10;Correct Answer is: Option A" required></textarea>
+                <small class="text-muted" style="display: block; margin-top: 0.5rem;">
+                    Separate multiple questions with a blank line. The parser will look for lines starting with A., B., C., D. and a line specifying the correct answer (e.g., "Correct Answer is: Option A").
+                </small>
+            </div>
+            <button type="submit" class="btn" style="background-color: var(--success); color: white; border: none; padding: 0.375rem 0.75rem; border-radius: 4px; cursor: pointer; font-weight: 400;">Import Questions</button>
+        </form>
+    </div>
+
+    <!-- Existing Questions -->
+    <h3 style="margin-bottom: 1.5rem;">Existing Questions</h3>
+    <div style="display: flex; flex-direction: column; gap: 1rem;">
+        {% for q in module.questions %}
+            <div class="card" style="padding: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <h4 style="margin-bottom: 0.5rem; flex: 1; padding-right: 1rem;">Q{{ loop.index }}. {{ q.text }}</h4>
+                    <div style="display: flex; gap: 0.75rem; align-items: center;">
+                        <span class="text-muted" style="font-size: 0.875rem; background: #E5E7EB; border-radius: 4px; padding: 2px 6px; white-space: nowrap;">
+                            {% if q.type == 'single' %} Single Choice {% elif q.type == 'multiple' %} Multi Choice {% else %} Numerical {% endif %}
+                        </span>
+                        <form action="{{ url_for('delete_question', question_id=q.id) }}" method="POST" style="margin: 0;" onsubmit="return confirm('Are you sure you want to delete this question? This action cannot be undone.');">
+                            <button type="submit" class="btn btn-sm btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.875rem; border-radius: 4px;" title="Delete Question">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                {% if q.image_path %}
+                    <div style="margin: 1rem 0;">
+                        <img src="{{ url_for('static', filename='uploads/' + q.image_path) }}" style="max-width: 100%; max-height: 200px; border-radius: 8px;">
+                    </div>
+                {% endif %}
+                <ul style="margin-top: 1rem; padding-left: 1.5rem; color: var(--text-muted); list-style-type: none;">
+                    {% for opt in q.options %}
+                        {% if opt.is_correct %}
+                        <li style="margin-bottom: 0.25rem; color: var(--success); font-weight: bold;">
+                        {% else %}
+                        <li style="margin-bottom: 0.25rem;">
+                        {% endif %}
+                            <i class="fa-solid {% if opt.is_correct %}fa-check{% else %}fa-xmark{% endif %}" style="margin-right: 8px;"></i>
+                            {{ opt.text }}
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% else %}
+            <div class="card text-center" style="padding: 3rem;">
+                <p class="text-muted">No questions added yet.</p>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+function toggleOptions(type) {
+    const opts = document.getElementById('options-container');
+    const num = document.getElementById('numerical-container');
+    if (type === 'numerical') {
+        opts.style.display = 'none';
+        num.style.display = 'block';
+    } else {
+        opts.style.display = 'block';
+        num.style.display = 'none';
+    }
+}
+</script>
+{% endblock %}
