@@ -11,8 +11,13 @@ app.config['SECRET_KEY'] = 'super-secret-key-change-it-later'
 
 # --- Storage Configuration (Simple Sync Method) ---
 # Data is pushed from local machine to GitHub and loaded directly from the repo
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///instance/test.db'
-app.config['UPLOAD_FOLDER'] = os.path.join('static', 'uploads')
+# Use absolute path to avoid "unable to open database file" errors on different environments
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+INSTANCE_DIR = os.path.join(BASE_DIR, 'instance')
+os.makedirs(INSTANCE_DIR, exist_ok=True)
+
+app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(INSTANCE_DIR, "test.db")}'
+app.config['UPLOAD_FOLDER'] = os.path.join(BASE_DIR, 'static', 'uploads')
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 # 16 MB limit
