@@ -1,4 +1,5 @@
 import os
+import shutil
 import re
 import random
 from flask import Flask, render_template, request, redirect, url_for, flash, session
@@ -8,11 +9,39 @@ from functools import wraps
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'super-secret-key-change-it-later'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'
-app.config['UPLOAD_FOLDER'] = os.path.join('static', 'uploads')
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 # 16 MB limit
 
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+# --- Storage Configuration (Render Persistent Disk Support) ---
+IS_RENDER = 'RENDER' in os.environ
+PERSISTENT_DATA_DIR = "/opt/render/project/data" if IS_RENDER else None
+
+if IS_RENDER:
+    # Ensure persistent directory exists
+    os.makedirs(PERSISTENT_DATA_DIR, exist_ok=True)
+    
+    db_path = os.path.join(PERSISTENT_DATA_DIR, 'test.db')
+    upload_folder = os.path.join(PERSISTENT_DATA_DIR, 'uploads')
+    
+    # Bootstrap: Copy initial database from repo to persistent disk if not present
+    if not os.path.exists(db_path):
+        source_db = os.path.join(app.root_path, 'instance', 'test.db')
+        if os.path.exists(source_db):
+            shutil.copy2(source_db, db_path)
+            
+    # Bootstrap: Copy initial uploads from repo to persistent disk if not present
+    if not os.path.exists(upload_folder):
+        source_uploads = os.path.join(app.root_path, 'static', 'uploads')
+        if os.path.exists(source_uploads):
+            shutil.copytree(source_uploads, upload_folder)
+    
+    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
+    app.config['UPLOAD_FOLDER'] = upload_folder
+else:
+    # Local development settings
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///instance/test.db'
+    app.config['UPLOAD_FOLDER'] = os.path.join('static', 'uploads')
+    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 # 16 MB limit
 
 db = SQLAlchemy(app)
 

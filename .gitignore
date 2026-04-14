@@ -50,11 +50,8 @@ coverage.xml
 cover/
 
 # Flask & SQL
-instance/
 .webassets-cache
-*.db
 *.sqlite3
-instance/site.db
 
 # Environments
 .env
@@ -77,8 +74,6 @@ venv.bak/
 Thumbs.db
 
 # User Uploads
-static/uploads/*
-!static/uploads/.gitkeep
 
 # Other
 .cursorignore
