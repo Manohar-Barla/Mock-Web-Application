@@ -18,7 +18,10 @@
             <a href="{{ url_for('practice') }}" class="nav-item">Practice</a>
             <a href="{{ url_for('history') }}" class="nav-item">History</a>
             <a href="{{ url_for('upload') }}" class="nav-item">Backend (Upload)</a>
-            <a href="https://github.com/" target="_blank" class="nav-item" title="Visit our GitHub"><i class="fa-brands fa-github" style="margin-right: 4px;"></i>GitHub</a>
+            {% if session.get('logged_in') %}
+                <a href="{{ url_for('logout') }}" class="nav-item" style="color: var(--danger);">Logout</a>
+            {% endif %}
+            <a href="https://github.com/Manohar-Barla" target="_blank" class="nav-item" title="Visit my GitHub"><i class="fa-brands fa-github" style="margin-right: 4px;"></i>GitHub</a>
         </div>
     </nav>
 

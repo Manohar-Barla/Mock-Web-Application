@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% block title %}Edit Question - MockMaster{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 0 auto;">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem;">
+        <div>
+            <h2>Edit Question</h2>
+            <p class="text-muted" style="margin: 0;">Modify the question details, options, and correctness.</p>
+        </div>
+        <a href="{{ url_for('edit_module', module_id=question.module_id) }}" class="btn btn-secondary">Back to Module</a>
+    </div>
+
+    <div class="card">
+        <form action="{{ url_for('edit_question', question_id=question.id) }}" method="POST" enctype="multipart/form-data">
+            <div class="form-group">
+                <label class="form-label" for="text">Question Text</label>
+                <textarea id="text" name="text" class="form-control" rows="4" required>{{ question.text }}</textarea>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="type">Question Type</label>
+                <select id="type" name="type" class="form-control" onchange="toggleOptions(this.value)" required>
+                    <option value="single" {% if question.type == 'single' %}selected{% endif %}>Single Choice (Radio)</option>
+                    <option value="multiple" {% if question.type == 'multiple' %}selected{% endif %}>Multiple Choice (Checkbox)</option>
+                    <option value="numerical" {% if question.type == 'numerical' %}selected{% endif %}>Numerical Answer</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="image">Replace Image (<small>Max 16MB</small>)</label>
+                {% if question.image_path %}
+                    <div style="margin-bottom: 1rem;">
+                        <p style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.5rem;">Current Image:</p>
+                        <img src="{{ url_for('static', filename='uploads/' + question.image_path) }}" style="max-width: 200px; border-radius: 8px; display: block; margin-bottom: 0.5rem;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; color: var(--danger);">
+                            <input type="checkbox" name="remove_image" value="1"> Remove current image
+                        </label>
+                    </div>
+                {% endif %}
+                <input type="file" id="image" name="image" class="form-control" accept="image/*">
+            </div>
+
+            <div id="options-container" class="form-group" style="display: {% if question.type == 'numerical' %}none{% else %}block{% endif %};">
+                <label class="form-label">Options (Check the box next to the correct answer)</label>
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;" id="options-list">
+                    {% for i in range(1, 5) %}
+                        {% set opt = question.options[i-1] if question.options|length >= i else None %}
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <input type="checkbox" name="is_correct_{{ i }}" value="1" id="is_correct_{{ i }}" title="Mark as Correct Answer" {% if opt and opt.is_correct %}checked{% endif %}>
+                            <label for="is_correct_{{ i }}" style="margin: 0; min-width: 65px; color: var(--success); font-weight: bold; cursor: pointer;">Correct?</label>
+                            <input type="text" name="option_{{ i }}" class="form-control" placeholder="Option {{ i }} text" value="{{ opt.text if opt else '' }}">
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div id="numerical-container" class="form-group" style="display: {% if question.type == 'numerical' %}block{% else %}none{% endif %};">
+                <label class="form-label" for="numerical_answer">Correct Numerical Answer</label>
+                {% set num_opt = question.options[0] if question.type == 'numerical' and question.options else None %}
+                <input type="number" id="numerical_answer" name="numerical_answer" class="form-control" step="any" value="{{ num_opt.text if num_opt else '' }}">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="explanation">Explanation (Optional)</label>
+                <textarea id="explanation" name="explanation" class="form-control" rows="3" placeholder="Explain why the answer is correct...">{{ question.explanation or '' }}</textarea>
+            </div>
+
+            <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+                <a href="{{ url_for('edit_module', module_id=question.module_id) }}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function toggleOptions(type) {
+    const opts = document.getElementById('options-container');
+    const num = document.getElementById('numerical-container');
+    if (type === 'numerical') {
+        opts.style.display = 'none';
+        num.style.display = 'block';
+    } else {
+        opts.style.display = 'block';
+        num.style.display = 'none';
+    }
+}
+</script>
+{% endblock %}

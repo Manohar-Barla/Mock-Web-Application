@@ -1,9 +1,10 @@
 import os
 import re
 import random
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, session
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.utils import secure_filename
+from functools import wraps
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'super-secret-key-change-it-later'
@@ -28,6 +29,7 @@ class Question(db.Model):
     text = db.Column(db.Text, nullable=False)
     type = db.Column(db.String(20), nullable=False) # 'single', 'multiple', 'numerical'
     image_path = db.Column(db.String(255), nullable=True) 
+    explanation = db.Column(db.Text, nullable=True)
     options = db.relationship('Option', backref='question', lazy=True, cascade='all, delete-orphan')
 
 class Option(db.Model):
@@ -51,12 +53,43 @@ class Attempt(db.Model):
 with app.app_context():
     db.create_all()
 
+# --- Auth Decorator ---
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not session.get('logged_in'):
+            flash('Please log in to access this page.', 'error')
+            return redirect(url_for('login', next=request.url))
+        return f(*args, **kwargs)
+    return decorated_function
+
 # --- Routes ---
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        if username == 'WhiteDevil' and password == 'CSA@1437':
+            session['logged_in'] = True
+            flash('Welcome back, WhiteDevil!', 'success')
+            next_page = request.args.get('next')
+            return redirect(next_page or url_for('home'))
+        else:
+            flash('Invalid username or password.', 'error')
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    session.pop('logged_in', None)
+    flash('Logged out successfully.', 'info')
+    return redirect(url_for('home'))
+
 @app.route('/')
 def home():
     return render_template('home.html')
 
 @app.route('/upload', methods=['GET', 'POST'])
+@login_required
 def upload():
     if request.method == 'POST':
         name = request.form.get('name')
@@ -71,6 +104,7 @@ def upload():
     return render_template('upload.html', modules=modules)
 
 @app.route('/edit_module/<int:module_id>')
+@login_required
 def edit_module(module_id):
     module = db.session.get(Module, module_id)
     if not module:
@@ -79,12 +113,14 @@ def edit_module(module_id):
     return render_template('edit_module.html', module=module)
 
 @app.route('/edit_module/<int:module_id>/add_question', methods=['POST'])
+@login_required
 def add_question(module_id):
     module = db.session.get(Module, module_id)
     if not module:
         return redirect(url_for('upload'))
     
     text = request.form.get('text')
+    explanation = request.form.get('explanation')
     q_type = request.form.get('type')
     
     # Handle image upload
@@ -99,7 +135,7 @@ def add_question(module_id):
         image_file.save(os.path.join(app.config['UPLOAD_FOLDER'], unique_filename))
         image_path = unique_filename
         
-    question = Question(module_id=module.id, text=text, type=q_type, image_path=image_path)
+    question = Question(module_id=module.id, text=text, type=q_type, image_path=image_path, explanation=explanation)
     db.session.add(question)
     db.session.commit() # Commit to get question.id
 
@@ -122,6 +158,7 @@ def add_question(module_id):
     return redirect(url_for('edit_module', module_id=module.id))
 
 @app.route('/delete_question/<int:question_id>', methods=['POST'])
+@login_required
 def delete_question(question_id):
     question = db.session.get(Question, question_id)
     if not question:
@@ -141,7 +178,62 @@ def delete_question(question_id):
     flash('Question deleted successfully!', 'success')
     return redirect(url_for('edit_module', module_id=module_id))
 
+@app.route('/edit_question/<int:question_id>', methods=['GET', 'POST'])
+@login_required
+def edit_question(question_id):
+    question = db.session.get(Question, question_id)
+    if not question:
+        flash('Question not found.', 'error')
+        return redirect(url_for('upload'))
+    
+    if request.method == 'POST':
+        question.text = request.form.get('text')
+        question.type = request.form.get('type')
+        question.explanation = request.form.get('explanation')
+        
+        # Handle image
+        remove_image = request.form.get('remove_image')
+        new_image = request.files.get('image')
+        
+        if remove_image or (new_image and new_image.filename != ''):
+            if question.image_path:
+                old_path = os.path.join(app.config['UPLOAD_FOLDER'], question.image_path)
+                if os.path.exists(old_path):
+                    os.remove(old_path)
+                question.image_path = None
+        
+        if new_image and new_image.filename != '':
+            from werkzeug.utils import secure_filename
+            import uuid
+            filename = secure_filename(new_image.filename)
+            unique_filename = f"{uuid.uuid4().hex}_{filename}"
+            new_image.save(os.path.join(app.config['UPLOAD_FOLDER'], unique_filename))
+            question.image_path = unique_filename
+
+        # Update options: Delete old and add new
+        Option.query.filter_by(question_id=question.id).delete()
+        
+        if question.type in ['single', 'multiple']:
+            for i in range(1, 5):
+                opt_text = request.form.get(f'option_{i}')
+                if opt_text and opt_text.strip():
+                    is_correct = bool(request.form.get(f'is_correct_{i}'))
+                    opt = Option(question_id=question.id, text=opt_text.strip(), is_correct=is_correct)
+                    db.session.add(opt)
+        elif question.type == 'numerical':
+            num_ans = request.form.get('numerical_answer')
+            if num_ans:
+                opt = Option(question_id=question.id, text=str(num_ans), is_correct=True)
+                db.session.add(opt)
+        
+        db.session.commit()
+        flash('Question updated successfully!', 'success')
+        return redirect(url_for('edit_module', module_id=question.module_id))
+    
+    return render_template('edit_question.html', question=question)
+
 @app.route('/edit_module/<int:module_id>/smart_paste', methods=['POST'])
+@login_required
 def smart_paste(module_id):
     module = db.session.get(Module, module_id)
     if not module:
@@ -158,8 +250,10 @@ def smart_paste(module_id):
         question_lines = []
         options = {}
         correct_letter = None
+        explanation = None
         
         opt_re = re.compile(r'^([A-E])[\.\)]\s*(.*)', re.IGNORECASE)
+        exp_re = re.compile(r'^(?:Explanation|Exp)[:\s\-]*(.*)', re.IGNORECASE)
         
         for line in lines:
             c_match = re.search(r'(?:Correct(?: Answer)?|Answer)(?:\s*is)?[:\s\-]*(?:Option\s*)?([A-E])', line, re.IGNORECASE)
@@ -171,6 +265,11 @@ def smart_paste(module_id):
             if opt_match:
                 options[opt_match.group(1).upper()] = opt_match.group(2)
                 continue
+
+            exp_match = exp_re.match(line)
+            if exp_match:
+                explanation = exp_match.group(1).strip()
+                continue
                 
             if re.search(r'next question is', line, re.IGNORECASE):
                 continue
@@ -180,7 +279,7 @@ def smart_paste(module_id):
             q_text = '\n'.join(question_lines)
             q_text = re.sub(r'^\d+\.\s*', '', q_text).strip()
             
-            q = Question(module_id=module.id, text=q_text, type='single')
+            q = Question(module_id=module.id, text=q_text, type='single', explanation=explanation)
             db.session.add(q)
             db.session.commit()
             
@@ -206,11 +305,13 @@ def practice():
     return render_template('practice.html', modules=modules)
 
 @app.route('/history')
+@login_required
 def history():
     attempts = Attempt.query.order_by(Attempt.timestamp.desc()).all()
     return render_template('history.html', attempts=attempts)
 
 @app.route('/delete_attempt/<int:attempt_id>', methods=['POST'])
+@login_required
 def delete_attempt(attempt_id):
     attempt = db.session.get(Attempt, attempt_id)
     if attempt:
@@ -220,6 +321,7 @@ def delete_attempt(attempt_id):
     return redirect(url_for('history'))
 
 @app.route('/clear_history', methods=['POST'])
+@login_required
 def clear_history():
     db.session.query(Attempt).delete()
     db.session.commit()

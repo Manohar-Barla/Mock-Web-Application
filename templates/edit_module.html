@@ -2,6 +2,15 @@
 {% block title %}Edit Module - MockMaster{% endblock %}
 
 {% block content %}
+<style>
+    .edit-opt {
+        margin-bottom: 0.25rem;
+    }
+    .edit-opt.is-correct {
+        color: var(--success);
+        font-weight: bold;
+    }
+</style>
 <div style="max-width: 800px; margin: 0 auto;">
     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem;">
         <div>
@@ -10,6 +19,7 @@
         </div>
         <a href="{{ url_for('upload') }}" class="btn btn-secondary">Back to Modules</a>
     </div>
+
 
     <!-- Add Question Form -->
     <div class="card" style="margin-bottom: 3rem;">
@@ -65,6 +75,11 @@
                 <input type="number" id="numerical_answer" name="numerical_answer" class="form-control" step="any">
             </div>
 
+            <div class="form-group">
+                <label class="form-label" for="explanation">Explanation (Optional)</label>
+                <textarea id="explanation" name="explanation" class="form-control" rows="2" placeholder="Explain why the answer is correct..."></textarea>
+            </div>
+
             <button type="submit" class="btn btn-primary">Add Question</button>
         </form>
     </div>
@@ -97,6 +112,9 @@
                         <span class="text-muted" style="font-size: 0.875rem; background: #E5E7EB; border-radius: 4px; padding: 2px 6px; white-space: nowrap;">
                             {% if q.type == 'single' %} Single Choice {% elif q.type == 'multiple' %} Multi Choice {% else %} Numerical {% endif %}
                         </span>
+                        <a href="{{ url_for('edit_question', question_id=q.id) }}" class="btn btn-sm" style="padding: 0.25rem 0.5rem; font-size: 0.875rem; border-radius: 4px; background: var(--primary); color: white;" title="Edit Question">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </a>
                         <form action="{{ url_for('delete_question', question_id=q.id) }}" method="POST" style="margin: 0;" onsubmit="return confirm('Are you sure you want to delete this question? This action cannot be undone.');">
                             <button type="submit" class="btn btn-sm btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.875rem; border-radius: 4px;" title="Delete Question">
                                 <i class="fa-solid fa-trash"></i>
@@ -111,16 +129,18 @@
                 {% endif %}
                 <ul style="margin-top: 1rem; padding-left: 1.5rem; color: var(--text-muted); list-style-type: none;">
                     {% for opt in q.options %}
-                        {% if opt.is_correct %}
-                        <li style="margin-bottom: 0.25rem; color: var(--success); font-weight: bold;">
-                        {% else %}
-                        <li style="margin-bottom: 0.25rem;">
-                        {% endif %}
+                        <li class="edit-opt {% if opt.is_correct %}is-correct{% endif %}">
                             <i class="fa-solid {% if opt.is_correct %}fa-check{% else %}fa-xmark{% endif %}" style="margin-right: 8px;"></i>
                             {{ opt.text }}
                         </li>
                     {% endfor %}
                 </ul>
+                {% if q.explanation %}
+                    <div style="margin-top: 1rem; padding: 1rem; background: #F9FAFB; border-radius: 8px; border-left: 3px solid var(--primary);">
+                        <strong style="display: block; font-size: 0.8rem; text-transform: uppercase; color: var(--primary); margin-bottom: 0.25rem;">Explanation:</strong>
+                        <p style="margin: 0; font-size: 0.9rem; color: var(--text-main);">{{ q.explanation }}</p>
+                    </div>
+                {% endif %}
             </div>
         {% else %}
             <div class="card text-center" style="padding: 3rem;">
@@ -142,5 +162,7 @@ function toggleOptions(type) {
         num.style.display = 'none';
     }
 }
+
+
 </script>
 {% endblock %}

@@ -2,6 +2,21 @@
 {% block title %}Results - MockMaster{% endblock %}
 
 {% block content %}
+<style>
+    .result-opt {
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        margin-bottom: 0.5rem;
+        border: 1px solid var(--border);
+        transition: all 0.2s;
+    }
+    .correct-opt {
+        background: rgba(16, 185, 129, 0.1);
+        border-color: var(--success);
+        color: #065F46;
+        font-weight: 500;
+    }
+</style>
 <div style="max-width: 600px; margin: 0 auto; text-align: center; margin-top: 4rem;">
     <div class="card" style="padding: 4rem 2rem;">
         <div style="font-size: 5rem; color: var(--primary); margin-bottom: 1rem;">
@@ -30,6 +45,47 @@
         <div style="display: flex; justify-content: center; gap: 1rem;">
             <a href="{{ url_for('quiz', module_id=module.id) }}" class="btn btn-secondary" style="padding: 0.75rem 1.5rem;">Retry Quiz</a>
             <a href="{{ url_for('practice') }}" class="btn btn-primary" style="padding: 0.75rem 1.5rem;">More Modules</a>
+        </div>
+    </div>
+
+    <!-- Question Review Section -->
+    <div style="margin-top: 4rem; text-align: left;">
+        <h2 style="font-size: 2rem; margin-bottom: 2rem; text-align: center; color: var(--text-main);">Question Review</h2>
+        <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+            {% for q in module.questions %}
+                <div class="card" style="padding: 2rem;">
+                    <h4 style="margin-bottom: 1rem;">Q{{ loop.index }}. {{ q.text }}</h4>
+                    
+                    {% if q.image_path %}
+                        <div style="margin-bottom: 1rem;">
+                            <img src="{{ url_for('static', filename='uploads/' + q.image_path) }}" style="max-width: 100%; max-height: 200px; border-radius: 8px;">
+                        </div>
+                    {% endif %}
+
+                    <ul style="padding-left: 0; list-style: none; margin-bottom: 1.5rem;">
+                        {% for opt in q.options %}
+                            <li class="result-opt {% if opt.is_correct %}correct-opt{% endif %}">
+                                <i class="fa-solid {% if opt.is_correct %}fa-check{% else %}fa-circle-dot{% endif %}" style="margin-right: 10px; opacity: 0.7;"></i>
+                                {{ opt.text }}
+                                {% if opt.is_correct %} <span style="font-size: 0.75rem; background: var(--success); color: white; padding: 2px 6px; border-radius: 4px; margin-left: 8px; text-transform: uppercase;">Correct Answer</span> {% endif %}
+                            </li>
+                        {% endfor %}
+                    </ul>
+
+                    {% if q.explanation %}
+                        <div style="padding: 1.25rem; background: rgba(79, 70, 229, 0.05); border-radius: 10px; border-left: 4px solid var(--primary);">
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 0.5rem; color: var(--primary); font-weight: 700; font-size: 0.85rem; text-transform: uppercase;">
+                                <i class="fa-solid fa-lightbulb"></i> Explanation
+                            </div>
+                            <p style="margin: 0; font-size: 1rem; line-height: 1.6; color: var(--text-main);">{{ q.explanation }}</p>
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+        
+        <div style="margin-top: 3rem; text-align: center; padding-bottom: 4rem;">
+            <a href="{{ url_for('home') }}" class="btn btn-secondary">Return to Home</a>
         </div>
     </div>
 </div>
